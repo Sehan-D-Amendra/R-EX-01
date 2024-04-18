@@ -1,0 +1,667 @@
+---
+title: "project_01"
+author: "Sehan Amendra"
+date: "`r Sys.Date()`"
+output: html_document
+---
+Install Packages
+The following packages are used to evaluate the fitted model for the given data set.
+
+```{r}
+library(MASS)
+library(tidyverse)
+```
+
+
+
+```{r}
+library(gridExtra)
+```
+
+
+```{r}
+library(corrplot)
+library(performance)
+
+
+```
+
+```{r}
+library(tinytex)
+```
+
+
+```{r}
+library(sp)
+```
+
+
+Import the data set
+
+```{r}
+insurance_claims <- read.csv("insurance_claims.csv")
+
+attach(insurance_claims)
+head(insurance_claims)
+
+```
+
+```{r}
+summary(insurance_claims)
+```
+
+```{r}
+str(insurance_claims)
+
+```
+
+
+Exploratory Analysis
+
+Under the exploratory analysis, We have to look at the relationship between categorical variables and numerical variables. Also, want to look at the relationship between each and every variables with the response
+variable
+
+
+```{r}
+p1 <- insurance_claims %>%
+ggplot(aes(x = tot_claims)) +
+geom_histogram(col = "black", fill = "yellow") +
+labs(x = "Total amount of Claims",
+title = "Histogram for Total amount of Claims") +
+theme_bw()
+p2 <- insurance_claims %>%
+ggplot(aes(x = log(tot_claims))) +
+geom_histogram(col = "black", fill = "green") +
+labs(x = "log(Total amount of Claims)",
+title = "Histogram for Log transformed\nTotal amount of Claims") +
+theme_bw()
+grid.arrange(p1,p2, ncol = 2)
+
+```
+
+
+1. Total amount of claims made by the policyholder
+
+
+
+
+```{r}
+p01 <- insurance_claims %>%
+ggplot(aes(y = tot_claims)) +
+geom_boxplot(col = "blue", fill = "skyblue") +
+labs(x = "Total amount of Claims",
+title = "Boxplot for Total amount of Claims") +
+theme_bw()
+p02 <- insurance_claims %>%
+ggplot(aes(y = log(tot_claims))) +
+geom_boxplot(col = "black", fill = "red") +
+labs(x = "log(Total amount of Claims)",
+title = "Boxplot for Log transformed\nTotal amount of Claims") +
+theme_bw()
+grid.arrange(p01,p02, ncol = 2)
+```
+
+‘tot_claims’ variable is not normally distributed. Then I applied log transformation to the variable and it
+seems that, transformed variable is fairly normally distributed. So, we used log transformed variable for
+further analysis.
+
+```{r}
+p3 <- insurance_claims %>%
+ggplot(aes(x = age,y = log(tot_claims))) +
+geom_point(col = "black") +
+labs(x = "Age",y = "log(Total amount of Claims)",
+title = "Age vs Log transformed\nTotal amount of Claims") +
+theme_bw()
+p4 <- insurance_claims %>%
+ggplot(aes(y = age)) +
+geom_boxplot(col = "blue", fill = "skyblue") +
+labs(x = "Age",
+title = "Boxplot for Age") +
+theme_bw()
+grid.arrange(p3,p4, ncol = 2)
+```
+
+2. Relationship between Age and Total amount of claims
+
+There is a a moderately positive relationship between Age and log transformed variable. Age variable does
+not contain any outliers
+
+
+```{r}
+p5 <- insurance_claims %>%
+ggplot(aes(x = bmi,y = log(tot_claims))) +
+geom_point(col = "blue") +
+labs(x = "BMI",y = "log(Total amount of Claims)",
+title = "BMI vs Log transformed\nTotal amount of Claims") +
+theme_bw()
+p6 <- insurance_claims %>%
+ggplot(aes(y = bmi)) +
+geom_boxplot(col = "blue", fill = "skyblue") +
+labs(x = "BMI",
+title = "Boxplot for BMI") +
+theme_bw()
+grid.arrange(p5,p6, ncol = 2)
+
+```
+
+3. Relationship between BMI and Total amount of claims
+
+It seems that there exists a very poor relationship between ‘bmi’ and log transformed variable. There are
+some outlires in “bmi“ variable.
+
+```{r}
+p7 <- insurance_claims %>%
+ggplot(aes(x = children,y = log(tot_claims))) +
+geom_point(col = "green") +
+labs(x = "Number of Dependents",y = "log(Total amount of Claims)",
+title = "Number of Dependents vs Log\ntransformed Total amount of Claims") +
+theme_bw()
+p8 <- insurance_claims %>%
+ggplot(aes(y = children)) +
+geom_boxplot(col = "blue", fill = "skyblue") +
+labs(x = "Number of Dependents",
+title = "Boxplot for Number of Dependents") +
+theme_bw()
+grid.arrange(p7,p8, ncol = 2)
+
+```
+
+4. Relationship between Number of Dependents and Total amount of claims
+
+There is a poor relationship with ‘children’ and log transformed variable. But we can not detect any outlires
+in this variable.
+
+```{r}
+p9 <- insurance_claims %>%
+ggplot(aes(x = sex, y = tot_claims)) +
+geom_boxplot(fill = "skyblue") +
+labs(x = "Gender",y = "Total amount of Claims",
+title = "Total amount of claims across\nGender") +
+theme_bw()
+p10 <- insurance_claims %>%
+ggplot(aes(x = sex,y = log(tot_claims))) +
+geom_boxplot(fill = "skyblue") +
+labs(x = "Gender",y = "log(Total amount of Claims)",
+title = "log(Total amount of claims) across\nGender") +
+theme_bw()
+grid.arrange(p9,p10, ncol = 2)
+
+```
+
+
+5. Total amount of claims across Gender
+We can see that there are outlires in the right side boxplot. But after applied the log transformation, we can
+not detect any outlires. Further, both distributions are fairly normally distributed because of both medians
+are approximately equal.
+
+```{r}
+p11 <- insurance_claims %>%
+ggplot(aes(x = is_smoker, y = tot_claims)) +
+geom_boxplot(fill = "skyblue") +
+labs(x = "Smoking status",y = "Total amount of Claims",
+title = "Total amount of claims across\nSmoking status") +
+theme_bw()
+p12 <- insurance_claims %>%
+ggplot(aes(x = is_smoker,y = log(tot_claims))) +
+geom_boxplot(fill = "skyblue") +
+labs(x = "Smoking status",y = "log(Total amount of Claims)",
+title = "log(Total amount of claims) across\nSmoking status") +
+theme_bw()
+grid.arrange(p11,p12, ncol = 2)
+
+```
+
+
+6. Total amount of claims across Smoking status
+We can see that there are outlires in the right side boxplot. But after transformed, we can not detect any
+outliers and both distributions are fairly normally distributed. In ‘yes’ category has significantly higher
+median than ‘no’ category. So, it seems that ‘is_smoker’ variable has an effect on ‘tot_claims’ variable.
+
+```{r}
+p13 <- insurance_claims %>%
+ggplot(aes(x = working_env, y = tot_claims)) +
+geom_boxplot(fill = "skyblue") +
+labs(x = " Working environment",y = "Total amount of Claims",
+title = "Total amount of claims across\nWorking environment") +
+theme_bw()
+p14 <- insurance_claims %>%
+ggplot(aes(x = working_env,y = log(tot_claims))) +
+geom_boxplot(fill = "skyblue") +
+labs(x = "Working environment",y = "log(Total amount of Claims)",
+title = "log(Total amount of claims) across\nWorking environment") +
+theme_bw()
+grid.arrange(p13,p14, ncol = 2)
+```
+
+7. Total amount of claims across working environment
+
+We can see that there are outlires in the right side boxplots. In ‘construction_site’ category has significantly
+higher median than other categories. So, it seems ‘working_env’ variable has an effect on ‘tot_claims’
+variable.
+
+
+
+```{r}
+corrplot(cor(insurance_claims[,c("age","bmi","children")]),method = 'square')
+
+```
+
+Correlation between Age, BMI and Number of Dependents
+
+There is a very poor correlation between ‘bmi and ’age’. Also, there is no relationship between other pairs
+in the plot.
+
+Handle the categorical variables
+
+Here, we have to covert all the categorical variables as numeric.
+```{r}
+insurance_claims$sex <- as.numeric(factor(insurance_claims$sex , labels = c("male" , "female")))
+
+
+```
+
+```{r}
+insurance_claims$is_smoker <- as.numeric(factor(insurance_claims$is_smoker , labels = c("yes","no")))
+```
+
+```{r}
+insurance_claims$working_env <- as.numeric(factor(insurance_claims$working_env , labels = c("factory" , "office", "construction" )))
+```
+
+
+
+```{r}
+str(insurance_claims)
+```
+
+
+
+```{r}
+head(insurance_claims)
+
+```
+
+
+
+
+```{r}
+summary(lm(tot_claims ~ age, data = insurance_claims))$adj.r.squared
+```
+
+
+
+```{r}
+summary(lm(tot_claims ~ bmi, data = insurance_claims))$adj.r.squared
+```
+
+
+
+
+```{r}
+summary(lm(tot_claims ~ sex, data = insurance_claims))$adj.r.squared
+```
+
+
+
+
+```{r}
+summary(lm(tot_claims ~ children, data = insurance_claims))$adj.r.squared
+```
+
+
+```{r}
+summary(lm(tot_claims ~ is_smoker, data = insurance_claims))$adj.r.squared
+```
+
+
+
+
+```{r}
+summary(lm(tot_claims ~ working_env, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + age, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + sex, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + bmi, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + children, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + is_smoker, data = insurance_claims))$adj.r.squared
+```
+
+
+
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + sex, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + bmi, data = insurance_claims))$adj.r.squared
+```
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + children, data = insurance_claims))$adj.r.squared
+```
+
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker, data = insurance_claims))$adj.r.squared
+```
+
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker + sex, data = insurance_claims))$adj.r.squared
+```
+
+
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker + bmi, data = insurance_claims))$adj.r.squared
+```
+
+
+
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker + children, data = insurance_claims))$adj.r.squared
+```
+
+
+it5
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker + bmi + sex, data = insurance_claims))$adj.r.squared
+```
+
+
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker + bmi + children, data = insurance_claims))$adj.r.squared
+```
+
+Here ‘children’ variable has highest adjusted R-squared value as 0.9085069. So, this variable is also in the
+model.
+
+
+it6
+```{r}
+summary(lm(tot_claims ~ working_env + age + is_smoker + bmi + children + sex, data = insurance_claims))$adj.r.squared
+```
+Note that, when the ‘sex’ variable is added to the model there is no any significance change in adjusted
+R-squared value. Based on that reason, we cannot include the ‘sex’ variable for the above fitted model.
+
+```{r}
+plot(c(1,2,3,4,5,6),c(0.8614734,0.886051,0.9013036,0.9063182,0.9085069, 0.9085106),
+xlab = "Number of variables in the model", ylab ="Adjusted R-squared", type="o")
+
+```
+
+
+Plot all the iteration
+According to the above plot, we have to include the following variables in order to obtain the best fitted
+model.
+• age
+• bmi
+• children
+• is_smoker
+• working_env
+
+Full model
+Obtained the full model by including all the variables as follows.
+
+
+
+```{r}
+full_model <- lm(tot_claims ~ . , data = insurance_claims)
+drop1(full_model, test = "F")
+
+```
+
+
+
+```{r}
+summary(full_model)
+```
+
+```{r}
+red_model <- lm(tot_claims ~ age + bmi + children + is_smoker + working_env , data = insurance_claims)
+summary(red_model)
+```
+
+
+```{r}
+anova(full_model,red_model)
+```
+
+Residual analysis
+
+
+```{r}
+library(performance)
+library(see)
+check_model(red_model, check = c("linearity","homogeneity","qq","outliers"))
+```
+
+
+
+```{r}
+check_normality(red_model)
+
+```
+
+
+```{r}
+check_heteroskedasticity(red_model)
+
+```
+
+
+
+
+```{r}
+check_outliers(red_model)
+
+```
+
+
+
+
+
+```{r}
+check_autocorrelation(red_model)
+
+```
+
+
+Box-cox transformation
+
+```{r}
+box_trans <- boxcox(red_model)
+```
+
+
+
+
+
+
+
+
+```{r}
+(lambda <- box_trans$x[which.max(box_trans$y)])
+```
+
+
+
+
+
+
+
+```{r}
+fit_model <- lm(((tot_claims^lambda-1)/lambda) ~ working_env + is_smoker + bmi + children + age, data = insurance_claims)
+
+summary(fit_model)
+```
+Check the model assumption
+
+```{r}
+check_model(fit_model, check = c("qq", "linearity", "homogeneity", "outliers"))
+
+```
+
+```{r}
+check_normality(fit_model)
+```
+
+```{r}
+check_heteroskedasticity(fit_model)
+```
+
+```{r}
+check_outliers(fit_model)
+
+```
+
+```{r}
+check_autocorrelation(fit_model)
+
+```
+
+Log transformation
+
+
+```{r}
+log_model <- lm(log(tot_claims) ~ age + bmi + children + is_smoker + working_env, data = insurance_claims )
+summary(log_model)
+```
+Check the model assumption
+```{r}
+check_model(log_model, check = c("qq", "linearity", "homogeneity", "outliers"))
+```
+
+```{r}
+check_normality(log_model)
+
+```
+
+```{r}
+check_heteroskedasticity(log_model)
+```
+
+```{r}
+check_outliers(log_model)
+```
+
+
+```{r}
+check_autocorrelation(log_model)
+
+```
+
+Multicolinearity
+
+```{r}
+library(caTools)
+library(car)
+```
+
+```{r}
+library(quantmod)
+```
+
+```{r}
+library(xts)
+library(zoo)
+```
+
+```{r}
+vif_values <- vif(red_model)
+
+barplot(vif_values, main = "VIF values", horiz = TRUE, col = "green")
+abline(v = 4, lwd = 3, lty = 2)
+```
+
+```{r}
+insurance_claims %>% dplyr::select(age, bmi, is_smoker) %>% pairs()
+```
+
+discussion
+
+In the best fitted model, each and every exploratory variables should be uncorrelated. If we detect the
+multicolinearity of the fitted model, It would be directly effected when predict the response variable. So, in
+this multiple linear regression analysis, we didn’t detect the multicolinearity.
+When checking the assumption, normality assumption was violated even use the log and boxcox transformation.
+
+```{r}
+dim(insurance_claims)
+```
+Conclusion
+```{r}
+coef_log_model <- coef(log_model)
+coef_log_model
+```
+
+```{r}
+plot(log_model) + geom_abline(intercept = coef_log_model[1], slope = coef_log_model[2], color = "red")
+
+```
+
+
+
+
+## NULL
+Best fitted model log(tot_claims) = 8.95226 + (0.0291)age + (0.00034)bmi + (0.1014)children +
+(0.56416)is_smoker
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
